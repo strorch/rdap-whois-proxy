@@ -2,17 +2,19 @@
 
 namespace hiqdev\rdap\WhoisProxy\Provider;
 
+use hiqdev\rdap\core\Domain\Constant\EventAction;
+use hiqdev\rdap\core\Domain\Constant\Role;
 use hiqdev\rdap\core\Domain\Constant\Status;
 use hiqdev\rdap\core\Domain\Entity\Domain;
+use hiqdev\rdap\core\Domain\Entity\Entity;
 use hiqdev\rdap\core\Domain\Entity\Nameserver;
 use hiqdev\rdap\core\Domain\ValueObject\DomainName;
+use hiqdev\rdap\core\Domain\ValueObject\Event;
 use hiqdev\rdap\core\Infrastructure\Provider\DomainProviderInterface;
 use Iodev\Whois\Modules\Tld\DomainInfo;
 use Iodev\Whois\Whois;
+use JeroenDesloovere\VCard\VCard;
 use yii\db\Exception;
-
-//use phpWhois\Whois as Whois;
-//use phpWhois\Whois;
 
 class WhoisDomainProvider implements DomainProviderInterface
 {
@@ -28,12 +30,11 @@ class WhoisDomainProvider implements DomainProviderInterface
 
     public function get(DomainName $domainName): Domain
     {
-        if (!$this->whois->isDomainAvailable("google.com")) {
-            throw new Exception('domain is not available');
-        }
         /** @var DomainInfo $domainInfo */
         $domainInfo = $this->whois->loadDomainInfo($domainName->toLDH());
-
+        if (!$domainInfo) {
+            throw new Exception('domain is not available');
+        }
         $domain = new Domain(DomainName::of($domainInfo->getDomainName()));
         foreach ($domainInfo->getNameServers() as $nameServer) {
             $domain->addNameserver(new Nameserver(DomainName::of($nameServer)));
@@ -42,27 +43,33 @@ class WhoisDomainProvider implements DomainProviderInterface
         foreach ($statuses as $state) {
             $domain->addStatus(Status::byName(strtoupper($state)));
         }
-        // todo:
+
         $creationDate = $domainInfo->getCreationDate();
         $expirationDate = $domainInfo->getExpirationDate();
         $registrarInfo = $domainInfo->getRegistrar();
-        $owner = $domainInfo->getOwner();
+        $ownerInfo = $domainInfo->getOwner();
+
+        $creationEvent = Event::occurred(EventAction::REGISTRATION(), $ownerInfo, \DateTimeImmutable::createFromMutable((new \DateTime())->setTimestamp($creationDate)));
+        $domain->addEvent($creationEvent);
+        $expirationEvent = Event::occurred(EventAction::EXPIRATION(), $ownerInfo, \DateTimeImmutable::createFromMutable((new \DateTime())->setTimestamp($expirationDate)));
+        $domain->addEvent($expirationEvent);
+
         $whoisServer = $domainInfo->getWhoisServer();
-        $domainInfo->getDomainNameUnicode();
+        $domain->setPort43(DomainName::of($whoisServer));
 
-//        $domainInfo->getVal();
-
-//        $domainInfo->get(); // try to obtain contacts
+        $domain->addEntity($this->getEntity(Role::REGISTRANT(), $ownerInfo));
+        $domain->addEntity($this->getEntity(Role::REGISTRAR(), $registrarInfo));
 
         return $domain;
     }
 
-//    public function get(DomainName $domainName): Domain
-//    {
-//        $whois = new NewWhois();
-//        $res = $whois->loo;
-//        $domain = new Domain(DomainName::of('kek'));
-//
-//        return $domain;
-//    }
+    private function getEntity(Role $role, string $personInfo): Entity
+    {
+        $personEntity = new Entity();
+        $personVcard = new VCard();
+        $personVcard->addCompany($personInfo);
+        $personEntity->addVcard($personVcard);
+        $personEntity->addRole($role);
+        return $personEntity;
+    }
 }
