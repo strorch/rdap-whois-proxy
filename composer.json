@@ -15,7 +15,7 @@
         "hiqdev/hidev": "dev-master",
         "hiqdev/hidev-php": "dev-master",
         "hiqdev/hidev-hiqdev": "dev-master",
-	"phpunit/phpunit": "^8.3.4",
+        "phpunit/phpunit": "^8.3.4",
         "vimeo/psalm": "^3.4"
     },
     "autoload": {
