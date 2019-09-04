@@ -9,8 +9,7 @@
     ],
     "require": {
         "hiqdev/rdap": "dev-master",
-        "io-developer/php-whois": "^3.4.1",
-        "phpwhois/phpwhois": "~4.0"
+        "io-developer/php-whois": "^3.4.1"
     },
     "require-dev": {
         "hiqdev/hidev": "dev-master",
