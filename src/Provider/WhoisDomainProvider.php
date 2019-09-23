@@ -14,7 +14,6 @@ use hiqdev\rdap\core\Infrastructure\Provider\DomainProviderInterface;
 use Iodev\Whois\Modules\Tld\DomainInfo;
 use Iodev\Whois\Whois;
 use JeroenDesloovere\VCard\VCard;
-use yii\db\Exception;
 
 class WhoisDomainProvider implements DomainProviderInterface
 {
@@ -33,7 +32,7 @@ class WhoisDomainProvider implements DomainProviderInterface
         /** @var DomainInfo $domainInfo */
         $domainInfo = $this->whois->loadDomainInfo($domainName->toLDH());
         if (!$domainInfo) {
-            throw new Exception('domain is not available');
+            throw new \Exception('domain is not available');
         }
         $domain = new Domain(DomainName::of($domainInfo->getDomainName()));
         foreach ($domainInfo->getNameServers() as $nameServer) {
