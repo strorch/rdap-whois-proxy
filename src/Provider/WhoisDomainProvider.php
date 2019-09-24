@@ -48,9 +48,9 @@ class WhoisDomainProvider implements DomainProviderInterface
         $registrarInfo = $domainInfo->getRegistrar();
         $ownerInfo = $domainInfo->getOwner();
 
-        $creationEvent = Event::occurred(EventAction::REGISTRATION(), $ownerInfo, \DateTimeImmutable::createFromMutable((new \DateTime())->setTimestamp($creationDate)));
+        $creationEvent = Event::occurred(EventAction::REGISTRATION(), \DateTimeImmutable::createFromMutable((new \DateTime())->setTimestamp($creationDate)));
         $domain->addEvent($creationEvent);
-        $expirationEvent = Event::occurred(EventAction::EXPIRATION(), $ownerInfo, \DateTimeImmutable::createFromMutable((new \DateTime())->setTimestamp($expirationDate)));
+        $expirationEvent = Event::occurred(EventAction::EXPIRATION(), \DateTimeImmutable::createFromMutable((new \DateTime())->setTimestamp($expirationDate)));
         $domain->addEvent($expirationEvent);
 
         $whoisServer = $domainInfo->getWhoisServer();
